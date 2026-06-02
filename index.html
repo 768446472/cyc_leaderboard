@@ -78,22 +78,37 @@
   }
   .url-demo .hl { color: #fc4c02; font-weight: 700; }
 
-  .segment-list { list-style: none; margin-top: 10px; }
-  .segment-list li { margin-bottom: 6px; }
-  .segment-list a {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; border-radius: 8px;
-    text-decoration: none; color: #333; font-size: .85rem;
-    background: #fafafa; transition: background .1s;
+  /* Segment picker list */
+  .report-list-empty {
+    text-align: center; color: #aaa; font-size: .85rem; padding: 20px 0 8px;
   }
-  .segment-list a:hover { background: #fff3e0; }
-  .seg-icon { font-size: 1.2rem; }
-  .seg-meta { font-size: .72rem; color: #999; margin-left: auto; }
-
-  .github-corner {
-    position: absolute; top: 0; right: 0;
+  .report-list {
+    display: flex; flex-direction: column; gap: 6px; margin-top: 12px;
   }
-  .github-corner svg { fill: #fff; color: #e34400; }
+  .report-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: 10px;
+    text-decoration: none; color: #333;
+    background: #fafafa; transition: all .12s;
+    border: 1px solid transparent;
+  }
+  .report-item:hover {
+    background: #fff3e0; border-color: #ffcc80;
+  }
+  .report-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, #fc4c02, #ff7043);
+    color: #fff; font-size: 1rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .report-info { flex: 1; min-width: 0; }
+  .report-name {
+    font-size: .9rem; font-weight: 600; color: #333;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .report-id { font-size: .72rem; color: #999; margin-top: 1px; }
+  .report-arrow { color: #ccc; font-size: 1.2rem; }
 
   .footer {
     text-align: center; color: #aaa; font-size: .75rem;
@@ -109,6 +124,7 @@
     .input-row input { padding: 10px 14px; font-size: .95rem; }
     .input-row button { padding: 10px 20px; font-size: .95rem; }
     .step { flex-direction: column; gap: 8px; }
+    .report-name { font-size: .82rem; }
   }
 </style>
 </head>
@@ -121,30 +137,41 @@
 </div>
 
 <div class="container">
+
+  <!-- Card 1: Available reports -->
   <div class="card">
-    <h2>📋 打开分析报告</h2>
-    <p>输入 Strava 赛段 ID，打开已生成的分析报告。</p>
+    <h2>📊 已有分析报告 (<span id="reportCount">0</span>)</h2>
+    <div id="reportListWrap">
+      <div class="report-list-empty" id="reportLoading">加载中...</div>
+    </div>
+  </div>
+
+  <!-- Card 2: Open by segment ID -->
+  <div class="card">
+    <h2>📋 按赛段 ID 打开</h2>
+    <p>输入 Strava 赛段 ID，直接跳转到对应分析报告。</p>
     <div class="input-row">
-      <input type="text" id="segmentId" placeholder="输入赛段 ID，例如 33862358" autofocus>
-      <button onclick="openReport()">🔍 打开报告</button>
+      <input type="text" id="segmentId" placeholder="输入赛段 ID，例如 33862358">
+      <button onclick="openReport()">🔍 打开</button>
     </div>
     <div class="error-msg" id="errorMsg"></div>
   </div>
 
+  <!-- Card 3: How to get segment ID -->
   <div class="card">
     <h2>📖 如何获取赛段 ID？</h2>
-    <p>从 Strava 赛段页面 URL 中提取数字 ID，有3种方法：</p>
+    <p>从 Strava 赛段页面 URL 中提取数字 ID：</p>
 
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
           <strong>网页版 Strava</strong><br>
-          在 <strong>strava.com</strong> 打开任意赛段页面，浏览器地址栏的 URL 中包含数字：<br>
+          打开任意赛段页面，地址栏 URL：<br>
           <div class="url-demo">
             https://www.strava.com/segments/<span class="hl">33862358</span>
           </div>
-          → 赛段 ID 就是 <strong>33862358</strong>
+          → 赛段 ID = <strong>33862358</strong>
         </div>
       </div>
 
@@ -152,7 +179,7 @@
         <div class="step-num">2</div>
         <div class="step-body">
           <strong>Strava 手机 App</strong><br>
-          进入赛段详情页 → 点击右上角 <strong>分享</strong> → <strong>复制链接</strong>，链接格式同上，提取其中的数字。
+          赛段详情页 → 右上角 <strong>分享</strong> → <strong>复制链接</strong> → 同格式提取数字。
         </div>
       </div>
 
@@ -160,18 +187,76 @@
         <div class="step-num">3</div>
         <div class="step-body">
           <strong>俱乐部 / 活动页面</strong><br>
-          赛段名称旁边通常有链接，右键 <strong>复制链接地址</strong>，格式为：<br>
+          赛段名称旁右键 <strong>复制链接地址</strong>：<br>
           <div class="url-demo">
             https://www.strava.com/segments/<span class="hl">3591075</span>?filter=overall
           </div>
-          → 提取 <strong>3591075</strong>
+          → 赛段 ID = <strong>3591075</strong>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Card 4: CLI usage -->
+  <div class="card">
+    <h2>🧪 使用工具生成报告</h2>
+    <p>通过 Python 脚本抓取 Strava 排行榜数据并生成 HTML 分析报告。</p>
+    <h3>前置条件</h3>
+    <p>1. Python 3.8+ 及依赖：<code>pip install stravalib requests beautifulsoup4</code></p>
+    <p style="margin-top:8px">2. 从浏览器导出 Strava Cookie 保存为 <code>cookie.txt</code>（Netscape 格式）</p>
+    <h3>命令行</h3>
+    <div class="url-demo">
+      python strava_segment_analyzer.py <span class="hl">33862358</span> demo --cookie-file cookie.txt
+    </div>
+    <p style="margin-top:8px">可选：<code>--max-pages N</code> 控制抓取页数（每页约100条）。</p>
+  </div>
+
+  <div class="footer">
+    <a href="https://github.com/Maoxuxu/strava-dev" target="_blank">GitHub</a> &middot;
+    Built with Python &middot; Data from Strava
+  </div>
 </div>
 
+<script src="reports.js"></script>
 <script>
+  // ===== Report list =====
+  (function() {
+    var wrap = document.getElementById('reportListWrap');
+    var countEl = document.getElementById('reportCount');
+
+    function renderReports(reports) {
+      if (!reports || reports.length === 0) {
+        wrap.innerHTML = '<div class="report-list-empty">暂无报告，运行 Python 脚本生成后自动出现在这里 ☝️</div>';
+        countEl.textContent = '0';
+        return;
+      }
+      countEl.textContent = reports.length;
+
+      var html = '<div class="report-list">';
+      reports.forEach(function(r) {
+        var initial = (r.name || 'S').charAt(0).toUpperCase();
+        html +=
+          '<a class="report-item" href="' + r.file + '">' +
+          '<div class="report-icon">' + initial + '</div>' +
+          '<div class="report-info">' +
+          '<div class="report-name" title="' + r.name + '">' + r.name + '</div>' +
+          '<div class="report-id">Segment ' + r.id + '</div>' +
+          '</div>' +
+          '<span class="report-arrow">→</span>' +
+          '</a>';
+      });
+      html += '</div>';
+      wrap.innerHTML = html;
+    }
+
+    if (typeof SEGMENT_REPORTS !== 'undefined') {
+      renderReports(SEGMENT_REPORTS);
+    } else {
+      wrap.innerHTML = '<div class="report-list-empty">无法加载报告清单 (reports.js)</div>';
+    }
+  })();
+
+  // ===== Manual ID open =====
   function openReport() {
     var input = document.getElementById('segmentId');
     var errEl = document.getElementById('errorMsg');
