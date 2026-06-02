@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strava Segment Analyzer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f4f4f4; color: #333; line-height: 1.6;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #fc4c02 0%, #e34400 100%);
+    color: #fff; padding: 48px 20px 40px; text-align: center;
+  }
+  .hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.5px; }
+  .hero .sub { font-size: .95rem; opacity: .85; margin-top: 6px; }
+  .hero .strava-badge {
+    display: inline-block; margin-top: 16px;
+    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+    border-radius: 20px; padding: 5px 16px; font-size: .78rem;
+  }
+
+  .container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+
+  .card {
+    background: #fff; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    padding: 28px 32px; margin-top: -16px; position: relative; z-index: 1;
+    margin-bottom: 24px;
+  }
+  .card h2 { font-size: 1.1rem; color: #fc4c02; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .card h3 { font-size: .95rem; color: #333; margin: 18px 0 8px; }
+  .card p { font-size: .88rem; color: #666; }
+
+  .input-row {
+    display: flex; gap: 10px; margin-top: 16px;
+  }
+  .input-row input {
+    flex: 1; padding: 12px 16px;
+    border: 2px solid #e0e0e0; border-radius: 10px;
+    font-size: 1rem; outline: none; transition: border-color .15s;
+  }
+  .input-row input:focus { border-color: #fc4c02; }
+  .input-row button {
+    padding: 12px 28px;
+    background: #fc4c02; color: #fff; border: none; border-radius: 10px;
+    font-size: 1rem; font-weight: 600; cursor: pointer; transition: background .15s;
+    white-space: nowrap;
+  }
+  .input-row button:hover { background: #e34400; }
+
+  .error-msg {
+    color: #d32f2f; font-size: .8rem; margin-top: 6px; display: none;
+  }
+
+  .steps { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+  .step {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: #fafafa; border-radius: 10px; padding: 14px 16px;
+  }
+  .step-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #fc4c02; color: #fff; font-weight: 700; font-size: .9rem;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-body { font-size: .85rem; color: #555; }
+  .step-body strong { color: #333; }
+  .step-body code {
+    background: #fff3e0; color: #e65100; padding: 2px 6px;
+    border-radius: 4px; font-size: .82rem; word-break: break-all;
+  }
+  .url-demo {
+    background: #f5f5f5; border: 1px solid #e0e0e0;
+    border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: .82rem;
+    color: #555; margin-top: 10px; overflow-x: auto; white-space: nowrap;
+  }
+  .url-demo .hl { color: #fc4c02; font-weight: 700; }
+
+  .segment-list { list-style: none; margin-top: 10px; }
+  .segment-list li { margin-bottom: 6px; }
+  .segment-list a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 8px;
+    text-decoration: none; color: #333; font-size: .85rem;
+    background: #fafafa; transition: background .1s;
+  }
+  .segment-list a:hover { background: #fff3e0; }
+  .seg-icon { font-size: 1.2rem; }
+  .seg-meta { font-size: .72rem; color: #999; margin-left: auto; }
+
+  .github-corner {
+    position: absolute; top: 0; right: 0;
+  }
+  .github-corner svg { fill: #fff; color: #e34400; }
+
+  .footer {
+    text-align: center; color: #aaa; font-size: .75rem;
+    padding: 20px 0 32px;
+  }
+  .footer a { color: #fc4c02; text-decoration: none; }
+
+  @media (max-width: 600px) {
+    .hero { padding: 32px 20px 28px; }
+    .hero h1 { font-size: 1.5rem; }
+    .card { padding: 20px 16px; margin-top: -10px; }
+    .input-row { flex-direction: column; }
+    .input-row input { padding: 10px 14px; font-size: .95rem; }
+    .input-row button { padding: 10px 20px; font-size: .95rem; }
+    .step { flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🚴 Strava Segment Analyzer</h1>
+  <div class="sub">赛段排行榜分析 · SOLO / GROUP 团骑识别 · 功率心率数据</div>
+  <div class="strava-badge">Powered by Arslan 猫须须</div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h2>📋 打开分析报告</h2>
+    <p>输入 Strava 赛段 ID，打开已生成的分析报告。</p>
+    <div class="input-row">
+      <input type="text" id="segmentId" placeholder="输入赛段 ID，例如 33862358" autofocus>
+      <button onclick="openReport()">🔍 打开报告</button>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>📖 如何获取赛段 ID？</h2>
+    <p>从 Strava 赛段页面 URL 中提取数字 ID，有3种方法：</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>网页版 Strava</strong><br>
+          在 <strong>strava.com</strong> 打开任意赛段页面，浏览器地址栏的 URL 中包含数字：<br>
+          <div class="url-demo">
+            https://www.strava.com/segments/<span class="hl">33862358</span>
+          </div>
+          → 赛段 ID 就是 <strong>33862358</strong>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Strava 手机 App</strong><br>
+          进入赛段详情页 → 点击右上角 <strong>分享</strong> → <strong>复制链接</strong>，链接格式同上，提取其中的数字。
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>俱乐部 / 活动页面</strong><br>
+          赛段名称旁边通常有链接，右键 <strong>复制链接地址</strong>，格式为：<br>
+          <div class="url-demo">
+            https://www.strava.com/segments/<span class="hl">3591075</span>?filter=overall
+          </div>
+          → 提取 <strong>3591075</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openReport() {
+    var input = document.getElementById('segmentId');
+    var errEl = document.getElementById('errorMsg');
+    var raw = input.value.trim();
+
+    if (!raw) {
+      errEl.style.display = 'block';
+      errEl.textContent = '请输入赛段 ID';
+      return;
+    }
+
+    var id = parseInt(raw, 10);
+    if (isNaN(id) || id <= 0) {
+      errEl.style.display = 'block';
+      errEl.textContent = '赛段 ID 必须是纯数字';
+      return;
+    }
+
+    errEl.style.display = 'none';
+    window.location.href = 'segment_' + id + '_analysis.html';
+  }
+
+  document.getElementById('segmentId').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') openReport();
+  });
+</script>
+
+</body>
+</html>
